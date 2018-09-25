@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Taxi</string>
     <string name="title_activity_welcome">Map</string>
-    <string name="google_direction_api">AIzaSyBgn3YajPd8rk9X6fS8mdBAJX_fxGLHvrw</string>
+    <string name="google_direction_api">AIzaSyD4SbMSIX0qVKKPKatVnLDIDx4GlKj9waM</string>
 </resources>

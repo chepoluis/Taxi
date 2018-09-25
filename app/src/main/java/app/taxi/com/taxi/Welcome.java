@@ -56,6 +56,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -65,6 +66,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import app.taxi.com.taxi.Common.Common;
+import app.taxi.com.taxi.Model.Token;
 import app.taxi.com.taxi.Remote.IGoogleAPI;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -84,7 +86,6 @@ public class Welcome extends FragmentActivity implements OnMapReadyCallback,
 
     private LocationRequest mLocationRequest;
     private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
 
     private static int UPDATE_INTERVAL = 5000;
     private static int FATEST_INTERVAL = 3000;
@@ -221,16 +222,27 @@ public class Welcome extends FragmentActivity implements OnMapReadyCallback,
         });
 
         // Geo Fire
-        drivers = FirebaseDatabase.getInstance().getReference("Drivers");
+        drivers = FirebaseDatabase.getInstance().getReference(Common.driver_tbl);
         geoFire = new GeoFire(drivers);
 
         setUpLocation();
 
         mService = Common.getGoogleAPI();
+
+        updateFirebaseToken();
+    }
+
+    private void updateFirebaseToken() {
+        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        DatabaseReference tokens = db.getReference(Common.token_tbl);
+
+        Token token = new Token(FirebaseInstanceId.getInstance().getToken());
+        tokens.child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                .setValue(token);
     }
 
     private void getDirection() {
-        currentPosition = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+        currentPosition = new LatLng(Common.mLastLocation.getLatitude(), Common.mLastLocation.getLongitude());
 
         String requestApi = null;
         try
@@ -383,7 +395,8 @@ public class Welcome extends FragmentActivity implements OnMapReadyCallback,
                         if(location_switch.isChecked())
                             displayLocation();
                     }
-                }
+                } // Add break
+                break;
         }
     }
 
@@ -454,11 +467,11 @@ public class Welcome extends FragmentActivity implements OnMapReadyCallback,
         {
             return;
         }
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if(mLastLocation != null) {
+        Common.mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if(Common.mLastLocation != null) {
             if(location_switch.isChecked()) {
-                final double latitude = mLastLocation.getLatitude();
-                final double longitude = mLastLocation.getLongitude();
+                final double latitude = Common.mLastLocation.getLatitude();
+                final double longitude = Common.mLastLocation.getLongitude();
 
                 // Update to Firebase
                 geoFire.setLocation(FirebaseAuth.getInstance().getCurrentUser().getUid(), new GeoLocation(latitude, longitude), new GeoFire.CompletionListener() {
@@ -524,7 +537,7 @@ public class Welcome extends FragmentActivity implements OnMapReadyCallback,
 
     @Override
     public void onLocationChanged(Location location) {
-        mLastLocation = location;
+        Common.mLastLocation = location;
         displayLocation();
     }
 
