@@ -279,7 +279,7 @@ public class Welcome extends FragmentActivity implements OnMapReadyCallback,
                     "origin="+currentPosition.latitude+","+currentPosition.longitude+"&"+
                     "destination="+destination+"&"+
                     "key="+getResources().getString(R.string.google_direction_api);
-            Log.d("EDMTDEV", requestApi); // Print URL for debug
+            Log.d("Taxi", requestApi); // Print URL for debug
             mService.getPath(requestApi)
                     .enqueue(new Callback<String>() {
                         @Override
