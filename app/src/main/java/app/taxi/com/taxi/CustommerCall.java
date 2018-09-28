@@ -86,6 +86,7 @@ public class CustommerCall extends AppCompatActivity {
                 // Send customer location to new activity
                 intent.putExtra("lat", lat);
                 intent.putExtra("lng", lng);
+                intent.putExtra("customerId", customerId);
 
                 startActivity(intent);
                 finish();
@@ -108,7 +109,7 @@ public class CustommerCall extends AppCompatActivity {
     private void cancelBooking(String customerId) {
         Token token = new Token(customerId);
 
-        Notification notification = new Notification("Notice!", "Driver has cancelled your request");
+        Notification notification = new Notification("Cancel", "Driver has cancelled your request");
         Sender sender = new Sender(token.getToken(), notification);
 
         mFCMService.sendMessage(sender)

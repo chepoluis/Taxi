@@ -582,4 +582,11 @@ public class Welcome extends FragmentActivity implements OnMapReadyCallback,
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        FirebaseDatabase.getInstance().goOffline();
+        stopLocationUpdates();
+    }
 }

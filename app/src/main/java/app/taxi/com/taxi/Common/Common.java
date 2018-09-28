@@ -2,6 +2,7 @@ package app.taxi.com.taxi.Common;
 
 import android.location.Location;
 
+import app.taxi.com.taxi.Model.User;
 import app.taxi.com.taxi.Remote.FCMClient;
 import app.taxi.com.taxi.Remote.IFCMService;
 import app.taxi.com.taxi.Remote.IGoogleAPI;
@@ -13,6 +14,8 @@ public class Common {
     public static final String user_rider_tbl = "RidersInformation";
     public static final String pickup_request_tbl = "PickupRequest";
     public static final String token_tbl = "Tokens";
+
+    public static User currentUser;
 
     public static Location mLastLocation = null;
 
