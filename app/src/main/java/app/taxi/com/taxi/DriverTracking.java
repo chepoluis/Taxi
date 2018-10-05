@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.ValueAnimator;
 import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -39,6 +40,7 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.JointType;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -162,6 +164,21 @@ public class DriverTracking extends FragmentActivity implements OnMapReadyCallba
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        // Change the style of the map
+        try {
+            boolean isSuccess = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(this, R.raw.uber_style_map)
+            );
+
+            if(!isSuccess)
+                Log.e("Error", "Map style load failed!");
+
+        }
+        catch (Resources.NotFoundException ex)
+        {
+            ex.printStackTrace();
+        }
+
         mMap = googleMap;
 
         // Marker customer
@@ -247,7 +264,7 @@ public class DriverTracking extends FragmentActivity implements OnMapReadyCallba
                 driverMarker.remove();
             driverMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude))
                     .title("You")
-                    .icon(BitmapDescriptorFactory.defaultMarker()));
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker)));
 
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 17.0f));
 

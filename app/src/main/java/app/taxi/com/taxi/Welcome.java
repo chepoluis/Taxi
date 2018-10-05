@@ -3,6 +3,7 @@ package app.taxi.com.taxi;
 import android.Manifest;
 import android.animation.ValueAnimator;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.location.Location;
 
@@ -48,6 +49,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.JointType;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -530,6 +532,7 @@ public class Welcome extends FragmentActivity implements OnMapReadyCallback,
                             mCurrent.remove(); // Remove already marker
                         mCurrent = mMap.addMarker(new MarkerOptions()
                                                     .position(new LatLng(latitude, longitude))
+                                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker))
                                                     .title("Your location"));
                         // Move camera for this position
                         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 15.0f));
@@ -575,6 +578,21 @@ public class Welcome extends FragmentActivity implements OnMapReadyCallback,
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        // Change the style of the map
+        try {
+            boolean isSuccess = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(this, R.raw.uber_style_map)
+            );
+
+            if(!isSuccess)
+                Log.e("Error", "Map style load failed!");
+
+        }
+        catch (Resources.NotFoundException ex)
+        {
+            ex.printStackTrace();
+        }
+
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.setTrafficEnabled(false);
