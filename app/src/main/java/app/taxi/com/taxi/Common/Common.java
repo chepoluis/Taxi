@@ -22,6 +22,15 @@ public class Common {
     public static final String baseURL = "https://maps.googleapis.com";
     public static final String fcmURL = "https://fcm.googleapis.com/";
 
+    public static double base_fare = 10.55;
+    private static double time_rate = 1.1;
+    private static double distance_rate = 3.5;
+
+    public static double formulaPrice(double km, double min)
+    {
+        return base_fare + (distance_rate * km) + (time_rate * min);
+    }
+
     public static IGoogleAPI getGoogleAPI()
     {
         return RetrofitClient.getClient(baseURL).create(IGoogleAPI.class);

@@ -623,6 +623,7 @@ public class Welcome extends FragmentActivity implements OnMapReadyCallback,
 
     }
 
+    // Delete the driver child
     @Override
     protected void onDestroy() {
         super.onDestroy();

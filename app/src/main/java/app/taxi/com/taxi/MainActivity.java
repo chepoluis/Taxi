@@ -50,10 +50,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Change the font
-        CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
+        /*CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
                                             .setDefaultFontPath("fonts/Arkhip_font.ttf")
                                             .setFontAttrId(R.attr.fontPath)
-                                            .build());
+                                            .build()); */
         setContentView(R.layout.activity_main);
 
         // Init firebase

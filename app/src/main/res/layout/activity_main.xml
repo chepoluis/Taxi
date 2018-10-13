@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/fondotaxi"
+    android:background="@drawable/colima_01___copy"
     android:id="@+id/rootLayout"
     tools:context=".MainActivity">
 
@@ -20,15 +20,15 @@
             android:text="T A X I"
             android:textSize="36sp"
             android:textAlignment="center"
-            android:textColor="@android:color/black"
+            android:textColor="@android:color/white"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
         <TextView
-            android:text="D R I V E R"
+            android:text="A P P / D R I V E R"
             android:textSize="16sp"
             android:textAlignment="center"
-            android:textColor="@android:color/black"
+            android:textColor="@android:color/white"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
     </LinearLayout>
@@ -39,7 +39,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
         android:layout_marginTop="20dp"
-        android:text="LOOKING FOR THE RIDER APP?"
+        android:text=""
         android:textSize="12sp"
         android:textAlignment="center"
         android:textColor="@color/bottomText"
