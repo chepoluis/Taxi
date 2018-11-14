@@ -1,7 +1,7 @@
 package app.taxi.com.taxi.Model;
 
 public class User {
-    private String email, password, name, phone, avatarUrl;
+    private String email, password, name, phone, avatarUrl, rates;
 
     public User() {
     }
@@ -11,6 +11,14 @@ public class User {
         this.password = password;
         this.name = name;
         this.phone = phone;
+    }
+
+    public String getRates() {
+        return rates;
+    }
+
+    public void setRates(String rates) {
+        this.rates = rates;
     }
 
     public String getAvatarUrl() {
