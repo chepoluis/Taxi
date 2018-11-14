@@ -2,12 +2,14 @@ package app.taxi.com.taxi;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -16,6 +18,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +31,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.animation.LinearInterpolator;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.geofire.GeoFire;
@@ -61,6 +67,7 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.SquareCap;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
@@ -71,8 +78,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.google.maps.android.SphericalUtil;
 import com.rengwuxian.materialedittext.MaterialEditText;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -82,10 +94,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import app.taxi.com.taxi.Common.Common;
 import app.taxi.com.taxi.Model.Token;
 import app.taxi.com.taxi.Remote.IGoogleAPI;
+import de.hdodenhof.circleimageview.CircleImageView;
 import dmax.dialog.SpotsDialog;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -139,6 +153,10 @@ public class DriverHome extends AppCompatActivity
 
     // Presense system
     DatabaseReference onlineRef, currentUserRef;
+
+    // Firebae storage
+    FirebaseStorage firebaseStorage;
+    StorageReference storageReference;
 
     Runnable drawPathRunnable = new Runnable() {
         @Override
@@ -200,6 +218,10 @@ public class DriverHome extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // Init Firebase Storage
+        firebaseStorage = FirebaseStorage.getInstance();
+        storageReference = firebaseStorage.getReference();
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -208,6 +230,19 @@ public class DriverHome extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        View navigationHeaderView = navigationView.getHeaderView(0);
+        TextView txtName = navigationHeaderView.findViewById(R.id.txtDriverName);
+        CircleImageView imageAvatar = navigationHeaderView.findViewById(R.id.image_avatar);
+
+        txtName.setText(Common.currentUser.getName());
+
+        if(Common.currentUser.getAvatarUrl() != null
+                && !TextUtils.isEmpty(Common.currentUser.getAvatarUrl())) {
+            Picasso.with(this)
+                    .load(Common.currentUser.getAvatarUrl())
+                    .into(imageAvatar);
+        }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -636,7 +671,9 @@ public class DriverHome extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_trip_history) {
+        if (id == R.id.nav_update_info) {
+            showDialogUpdateInfo();
+        } else if (id == R.id.nav_trip_history) {
 
         } else if (id == R.id.nav_way_bill) {
 
@@ -653,6 +690,131 @@ public class DriverHome extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void showDialogUpdateInfo() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(DriverHome.this);
+        alertDialog.setTitle("Update information");
+        alertDialog.setMessage("Please fill all information");
+
+        LayoutInflater inflater = this.getLayoutInflater();
+        View layout_pwd = inflater.inflate(R.layout.layout_update_information, null);
+
+        final MaterialEditText edtName = layout_pwd.findViewById(R.id.edtName);
+        final MaterialEditText edtPhone = layout_pwd.findViewById(R.id.edtPhone);
+        final ImageView image_upload = layout_pwd.findViewById(R.id.image_upload);
+        image_upload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chooseImage();
+            }
+        });
+
+        alertDialog.setView(layout_pwd);
+
+        // Set button
+        alertDialog.setPositiveButton("Actualizar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                final android.app.AlertDialog waitingDialog = new SpotsDialog(DriverHome.this);
+                waitingDialog.show();
+
+                String name = edtName.getText().toString();
+                String phone = edtPhone.getText().toString();
+
+                Map<String, Object> updateInfo = new HashMap<>();
+                if(!TextUtils.isEmpty(name))
+                    updateInfo.put("name", name);
+                if(!TextUtils.isEmpty(phone))
+                    updateInfo.put("phone", phone);
+
+                DatabaseReference driverInformation = FirebaseDatabase.getInstance().getReference(Common.user_driver_tbl);
+                driverInformation.child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                        .updateChildren(updateInfo)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if(task.isSuccessful())
+                                    Toast.makeText(DriverHome.this, "Información actualizada!", Toast.LENGTH_SHORT).show();
+                                else
+                                    Toast.makeText(DriverHome.this, "Error al actualizar", Toast.LENGTH_SHORT).show();
+
+                                waitingDialog.dismiss();
+                            }
+                        });
+            }
+        });
+
+        alertDialog.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        alertDialog.show();
+    }
+
+    private void chooseImage() {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select picture: "), Common.PICK_IMAGE_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == Common.PICK_IMAGE_REQUEST && resultCode == RESULT_OK
+                && data != null && data.getData() != null)
+        {
+            Uri saveUri = data.getData();
+            if(saveUri != null)
+            {
+                final ProgressDialog mDialog = new ProgressDialog(this);
+                mDialog.setMessage("Uploading...");
+                mDialog.show();
+
+                String imageName = UUID.randomUUID().toString(); // Random name image upload
+                final StorageReference imageFolder = storageReference.child("images/" + imageName);
+                imageFolder.putFile(saveUri)
+                        .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                mDialog.dismiss();
+
+                                imageFolder.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        Map<String, Object> avatarUpdate = new HashMap<>();
+                                        avatarUpdate.put("avatarUrl", uri.toString());
+
+                                        DatabaseReference driverInformation = FirebaseDatabase.getInstance().getReference(Common.user_driver_tbl);
+                                        driverInformation.child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                                                .updateChildren(avatarUpdate)
+                                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                    @Override
+                                                    public void onComplete(@NonNull Task<Void> task) {
+                                                        if(task.isSuccessful())
+                                                            Toast.makeText(DriverHome.this, "Imagen subida!", Toast.LENGTH_SHORT).show();
+                                                        else
+                                                            Toast.makeText(DriverHome.this, "Error al subir imagen", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                });
+                                    }
+                                });
+                            }
+                        })
+                        .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                                double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+                                mDialog.setMessage("Cargando " + progress + "%");
+                            }
+                        });
+            }
+        }
     }
 
     private void showDialogChangePwd() {

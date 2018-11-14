@@ -200,7 +200,10 @@ public class MainActivity extends AppCompatActivity {
                                                 .addListenerForSingleValueEvent(new ValueEventListener() {
                                                     @Override
                                                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                                        // After assigned value
                                                         Common.currentUser = dataSnapshot.getValue(User.class);
+                                                        // Start new activity
+                                                        startActivity(new Intent(MainActivity.this, DriverHome.class));
                                                     }
 
                                                     @Override
@@ -209,7 +212,6 @@ public class MainActivity extends AppCompatActivity {
                                                     }
                                                 });
 
-                                        startActivity(new Intent(MainActivity.this, DriverHome.class));
                                         finish();
                                     }
                                 }).addOnFailureListener(new OnFailureListener() {
